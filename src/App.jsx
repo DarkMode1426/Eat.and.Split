@@ -26,72 +26,99 @@ function App() {
   const [myExpense, setMyExpense] = useState(0);
   const hisExpense = Number(billValue) - Number(myExpense);
   const [payer, setPayer] = useState("you");
-  const [selectedFriend, setSeleectedFriend] = useState("");
+  const [selectedFriend, setSeleectedFriend] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
   const [friends, setFriends] = useState(initialFriends);
+  const [addForm, setAddForm] = useState(false);
+  const [friendName, setFriendName] = useState("");
+  const [imgURL, setImgURL] = useState("https://i.pravatar.cc/48");
   function handleSelect(id) {
-    const friend = initialFriends.find((friend) => friend.id === id);
-    setSeleectedFriend(friend);
+    const friend = friends.find((friend) => friend.id === id);
+    setSeleectedFriend(friend || null);
   }
 
   function handleSubmit(e) {
     e.preventDefault();
-    setFriends((prev) => prev.map((friend) => {
-      if (friend.id === Number(payer)){
-        return {
-          ...friend, balance: friend.balance + Number(myExpense)
-        };
-      }
-      if(payer === "you" && friend.id === selectedFriend.id){
-        return{
-          ...friend, balance: friend.balance - Number(hisExpense)
+    setFriends((prev) =>
+      prev.map((friend) => {
+        if (friend.id === Number(payer)) {
+          return {
+            ...friend,
+            balance: friend.balance + Number(myExpense),
+          };
         }
-      }
-      else{
-        return friend;
-      }
-    }))
+        if (payer === "you" && friend.id === selectedFriend.id) {
+          return {
+            ...friend,
+            balance: friend.balance - Number(hisExpense),
+          };
+        } else {
+          return friend;
+        }
+      }),
+    );
     console.log(hisExpense);
     setBillValue(0);
-setMyExpense(0);
-setPayer("you");
+    setMyExpense(0);
+    setPayer("you");
   }
 
-  function showForm(){
+  function handleFriendSubmit(e) {
+    e.preventDefault();
+    setFriends((prev) => {
+      const updated = [
+        ...prev,
+        {
+          id: Math.floor(Math.random() * 1000000),
+          name: friendName,
+          image: imgURL,
+          balance: 0,
+        },
+      ];
 
+      console.log(updated);
+      return updated;
+    });
   }
 
   return (
-    <div className="flex gap-10 p-10">
+    <div className="flex gap-10 p-10 w-[100%] mx-auto justify-center">
       <div className="flex flex-col gap-4">
         <ul className="flex flex-col gap-4">
           {friends.map((friend) => (
             <li
               key={friend.id}
-              className="flex gap-4 items-center hover:bg-orange-300 p-2 rounded"
+              className={`flex gap-10 justify-between p-2 rounded transition
+    ${selectedFriend?.id === friend.id ? "bg-orange-300" : "hover:bg-orange-200"}
+  `}
             >
-              <img
-                src={friend.image}
-                alt="img"
-                className="rounded-full w-12 h-12"
-              />
+              <div className="flex gap-2">
+                <img
+                  src={friend.image}
+                  alt="img"
+                  className="rounded-full w-12 h-12"
+                />
 
-              <span>
-                <p>{friend.name}</p>
-                <p>{friend.balance > 0 ? `You owe ${friend.name} ${friend.balance}` : 
-                friend.balance < 0 ? `${friend.name} Owes you ${friend.balance}` :
-                "You are Even"}</p>
-              </span>
-
+                <span>
+                  <p>{friend.name}</p>
+                  <p
+                    className={`${friend.balance > 0 ? "text-red-600" : friend.balance < 0 ? "text-green-600" : "text-black"}`}
+                  >
+                    {friend.balance > 0
+                      ? `You owe ${friend.name} ${Math.abs(friend.balance)}$`
+                      : friend.balance < 0
+                        ? `${friend.name} Owes you ${Math.abs(friend.balance)}$`
+                        : "You are Even"}
+                  </p>
+                </span>
+              </div>
               <button
-                className="bg-orange-600 w-[60px] rounded-lg text-white"
+                className="bg-orange-600 w-[100px] h-[30px] rounded-lg text-white"
                 onClick={() => {
-                  
-                  if (selectedFriend?.id === friend.id){
+                  if (selectedFriend?.id === friend.id) {
                     handleSelect(null);
-                  setFormOpen(false);
-                  }
-                  else{
+                    setFormOpen(false);
+                  } else {
                     handleSelect(friend.id);
                     setFormOpen(true);
                   }
@@ -102,68 +129,115 @@ setPayer("you");
             </li>
           ))}
         </ul>
+        {addForm && (
+          <div className="flex flex-col gap-4 bg-orange-200 p-4 rounded-md">
+            <form
+              className="flex flex-col gap-10"
+              onSubmit={handleFriendSubmit}
+            >
+              <div className="flex items-center gap-4">
+                <label className="w-40">👫 Friend Name</label>
+                <input
+                  type="text"
+                  className="border p-2 rounded-md flex-1"
+                  value={friendName}
+                  onChange={(e) => setFriendName(e.target.value)}
+                />
+              </div>
 
-        <button className="bg-orange-600 w-[120px] rounded-lg text-white">
-          Add Friend
-        </button>
-      </div>
-        {formOpen && (
-      <div className="flex flex-col gap-4">
-        <h1 className="text-xl font-bold">
-          Split a Bill with {selectedFriend ? selectedFriend.name : ""}
-        </h1>
-
-        <form className="flex flex-col gap-10" onSubmit={handleSubmit}>
-          <div className="flex items-center gap-4">
-            <label className="w-40">Bill Value</label>
-            <input
-              type="text"
-              className="border p-2"
-              value={billValue}
-              onChange={(e) => setBillValue(e.target.value)}
-            />
+              <div className="flex items-center gap-4">
+                <label className="w-40">🌄 Image URL</label>
+                <input
+                  type="text"
+                  className="border p-2 rounded-md flex-1"
+                  value={imgURL}
+                  onChange={(e) => setImgURL(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-4">
+                <div className="w-40"></div>
+                <button className="bg-orange-600 flex-1 h-[40px] rounded-lg text-white">
+                  Add
+                </button>
+              </div>
+            </form>
           </div>
-
-          <div className="flex items-center gap-4">
-            <label className="w-40">Your Expense</label>
-            <input
-              type="text"
-              className="border p-2"
-              value={myExpense}
-              onChange={(e) => setMyExpense(e.target.value)}
-            />
-          </div>
-
-          <div className="flex items-center gap-4">
-            <label className="w-40">{selectedFriend.name} Expense</label>
-            <input
-              type="text"
-              className="border p-2 bg-gray-400"
-              value={hisExpense}
-              readOnly
-            />
-          </div>
-
-          <div className="flex items-center gap-4 ">
-            <label className="w-40">Who is paying?</label>
-            <select className="border p-2 flex-1" value={payer} onChange={(e) => setPayer(e.target.value)}>
-              <option value="you">You</option>
-              {selectedFriend && (
-              <option value={selectedFriend.id}>
-                {selectedFriend.name}
-              </option>
-              )}
-            </select>
-          </div>
-          <button className="bg-orange-600 w-[120px] rounded-lg text-white">
-            Split Bill
-          </button>
-        </form>
-      </div>
         )}
+        <div className="flex gap-10 justify-between p-2">
+          <div className="w-40"></div>
+          <button
+            className="bg-orange-600 w-[130px] h-[30px] rounded-lg text-white"
+            onClick={() => setAddForm(!addForm)}
+          >
+            {addForm ? "Close" : "Add a Friend"}
+          </button>
+        </div>
+      </div>
+      {formOpen && (
+        <div className="flex flex-col gap-4 bg-orange-200 p-4 rounded-md">
+          <h1 className="text-xl font-bold">
+            Split a Bill with {selectedFriend ? selectedFriend.name : ""}
+          </h1>
+
+          <form className="flex flex-col gap-10" onSubmit={handleSubmit}>
+            <div className="flex items-center gap-4">
+              <label className="w-40">💰 Bill Value</label>
+              <input
+                type="text"
+                className="border p-2 flex-1"
+                value={billValue}
+                onChange={(e) => setBillValue(e.target.value)}
+              />
+            </div>
+
+            <div className="flex items-center gap-4">
+              <label className="w-40">🧍‍♀️Your Expense</label>
+              <input
+                type="text"
+                className="border p-2 flex-1"
+                value={myExpense}
+                onChange={(e) => setMyExpense(e.target.value)}
+              />
+            </div>
+
+            <div className="flex items-center gap-4">
+              <label className="w-40">
+                👫 {selectedFriend?.name}'s Expense
+              </label>
+              <input
+                type="text"
+                className="border p-2 bg-gray-400 flex-1"
+                value={hisExpense}
+                readOnly
+              />
+            </div>
+
+            <div className="flex items-center gap-4 ">
+              <label className="w-40">🤑 Who is paying?</label>
+              <select
+                className="border p-2 flex-1"
+                value={payer}
+                onChange={(e) => setPayer(e.target.value)}
+              >
+                <option value="you">You</option>
+                {selectedFriend && (
+                  <option value={selectedFriend.id}>
+                    {selectedFriend.name}
+                  </option>
+                )}
+              </select>
+            </div>
+            <div className="flex gap-4">
+              <div className="w-40"></div>
+              <button className="bg-orange-600 flex-1 h-[40px] rounded-lg text-white">
+                Add
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
-  )
-;
+  );
 }
 
 export default App;
